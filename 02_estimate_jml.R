@@ -65,6 +65,14 @@ fit$convergence  # 0 = converged
 
 # ---- Estimates and bias correction -------------------------------------------
 
+# JML suffers from the incidental parameters problem: each theta[i] is
+# estimated from only J answers, however many students there are. Each theta
+# estimate is fitted to its student's own answers, so chance results are
+# counted as ability, and the answers look less random than they are.
+# Because the logistic noise variance is fixed, this shows up as a stretched
+# scale of b (by about J / (J - 1)). Multiplying by (J - 1) / J is an
+# approximate correction.
+
 b_free     <- fit$par[idx_b]
 b_hat      <- c(b_free, -sum(b_free))
 b_hat_corr <- b_hat * (J - 1) / J  # approximate JML bias correction
