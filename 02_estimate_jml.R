@@ -26,9 +26,12 @@ joint_log_likelihood <- function(params, X) {
   b      <- c(b_free,-sum(b_free))  #last question difficulty is normalized
   
   gap <- outer(theta,b,"-")  # gap per student - difficulty pair
-  P   <- plogis(gap)         # theoretical probability of being correct
+
+  # log P and log(1 - P) computed directly, to avoid log(0) at extreme gaps
+  log_p   <- plogis(gap, log.p = TRUE)
+  log_1mp <- plogis(gap, lower.tail = FALSE, log.p = TRUE)
   
-  sum(X * log(P)  + (1-X)  * log((1-P)))
+  sum(X * log_p + (1 - X) * log_1mp)
 }
 
 # ---- Data for estimation -----------------------------------------------------

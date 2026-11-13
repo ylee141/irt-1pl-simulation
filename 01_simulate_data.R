@@ -14,9 +14,10 @@ set.seed(1)
 # ---- Settings ----------------------------------------------------------------
 N <- 500  # number of test takers
 J <- 10   # number of test questions
+sigma_true <- 2 # standard deviation of the true ability distribution
 
 # ---- True parameters ---------------------------------------------------------
-theta <- rnorm(n = N, mean = 0, sd = 1)  # abilities, length N
+theta <- rnorm(n = N, mean = 0, sd = sigma_true)  # abilities, length N
 b     <- seq(-2, 2, length.out = J)      # difficulties, length J
 
 # ---- Response probabilities --------------------------------------------------
