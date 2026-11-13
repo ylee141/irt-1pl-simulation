@@ -5,6 +5,7 @@
 #   i = 1, ..., N : students (rows)
 #   j = 1, ..., J : questions (columns)
 #   theta[i]      : ability of student i
+#   sigma_true    : standard deviation of the true ability distribution
 #   b[j]          : difficulty of question j
 #   P[i, j]       : probability of student i getting question j correctly
 # ==============================================================================
@@ -14,9 +15,9 @@ set.seed(1)
 # ---- Settings ----------------------------------------------------------------
 N <- 500  # number of test takers
 J <- 10   # number of test questions
-sigma_true <- 2 # standard deviation of the true ability distribution
 
 # ---- True parameters ---------------------------------------------------------
+sigma_true <- 2 # standard deviation of the true ability distribution
 theta <- rnorm(n = N, mean = 0, sd = sigma_true)  # abilities, length N
 b     <- seq(-2, 2, length.out = J)      # difficulties, length J
 

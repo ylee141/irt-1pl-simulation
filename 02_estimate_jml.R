@@ -1,15 +1,22 @@
 # ==============================================================================
-# JML Estimation with bias correction
+# Joint maximum likelihood (JML) estimation of the 1PL model,
+# with an approximate bias correction
 #
 # Conventions
 #   i = 1, ..., N : students (rows)
 #   j = 1, ..., J : questions (columns)
-#   theta[i]      : ability of student i
-#   b[j]          : difficulty of question j (true values, from simulation)
-#   P[i, j]       : probability that student i answers question j correctly
-#                   = logistic(theta[i] - b[j])
 #   X             : N x J matrix of simulated responses (the gradebook)
 #   X_fit         : X without students who scored 0 or J
+#
+# True values (from the simulation, used only for comparison)
+#   theta_true    : abilities
+#   b_true        : difficulties
+#
+# Estimated parameters
+#   theta[i]      : ability of student i
+#   b[j]          : difficulty of question j, with sum(b) = 0
+#   P[i, j]       : probability that student i answers question j correctly
+#                   = logistic(theta[i] - b[j])
 # ==============================================================================
 
 source("01_simulate_data.R")  # creates N, J, theta, b, X

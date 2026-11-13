@@ -5,14 +5,21 @@
 #   i = 1, ..., N : students (rows)
 #   j = 1, ..., J : questions (columns)
 #   r = 1, ..., R : simulation draws
-#   theta[i]      : ability of student i
-#   b[j]          : difficulty of question j (true values, from simulation)
-#   sigma         : SD of abilities in the population, theta ~ N(0, sigma^2)
-#   draws[i, r]   : standard normal draw r for student i
+#   X             : N x J matrix of simulated responses (the gradebook)
+#
+# True values (from the simulation, used only for comparison)
+#   b_true        : difficulties
+#   sigma_true    : SD of abilities, theta ~ N(0, sigma_true^2)
+#
+# Estimated parameters
+#   b[j]          : difficulty of question j
+#   sigma         : SD of abilities in the population
+#
+# Simulation of the integral over ability
+#   draws[i, r]   : fixed standard normal draw r for student i
 #   theta[i, r]   : simulated ability = sigma * draws[i, r]
 #   P[i, r, j]    : probability of a correct answer at that ability
 #                   = logistic(theta[i, r] - b[j])
-#   X             : N x J matrix of simulated responses (the gradebook)
 # ==============================================================================
 
 source("01_simulate_data.R") # creates N, J, theta, b, X
