@@ -1,0 +1,140 @@
+---
+title: "“Estimating the 1PL model: JML vs. MML”"
+format: html
+editor: visual
+---
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+1 + 1
+```
+
+usethis::use_git_config(user.name = "Your Name", user.email = "your-github-email\@example.com")You can add options to executable code like this
+
+```{r}
+#| echo: false
+2 * 2
+
+source("02_estimate_jml.R")
+source("03_estimate_mml.R")
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).
+
+```{r}
+# ==============================================================================
+# MML Estimation
+#
+# Conventions
+#   i = 1, ..., N : students (rows)
+#   j = 1, ..., J : questions (columns)
+#   r = 1, ..., R : simulation draws
+#   X             : N x J matrix of simulated responses (the gradebook)
+#
+# True values (from the simulation, used only for comparison)
+#   b_true        : difficulties
+#   sigma_true    : SD of abilities, theta ~ N(0, sigma_true^2)
+#
+# Estimated parameters
+#   b[j]          : difficulty of question j
+#   sigma         : SD of abilities in the population
+#
+# Simulation of the integral over ability
+#   draws[i, r]   : fixed standard normal draw r for student i
+#   theta[i, r]   : simulated ability = sigma * draws[i, r]
+#   P[i, r, j]    : probability of a correct answer at that ability
+#                   = logistic(theta[i, r] - b[j])
+# ==============================================================================
+
+source("01_simulate_data.R") # creates N, J, theta, b, X
+
+
+# ---- Simulation draws --------------------------------------------------------
+
+# Fixed standard normal draws, R per student, created once outside the
+# likelihood so it stays smooth across optimizer iterations.
+
+set.seed(2)
+R <- 100
+draws <- matrix(rnorm(N * R, 0, 1), nrow = N, ncol = R) # N * R
+
+# ---- Marginal log-likelihood -------------------------------------------------
+
+# logsumexp helper
+
+marginal_log_likelihood <- function(params, X, draws) {
+  N <- nrow(X)
+  J <- ncol(X)
+  R <- ncol(draws)
+  
+  b <- params[1:J]
+  log_sigma <- params[J + 1] # optimizer searches over any real number
+  sigma <- exp(log_sigma) # so sigma stays positive
+  
+  theta <- sigma * draws # N x R, simulated abilities
+  gap <- outer(theta, b, "-") # N x R x J
+  
+  log_p <- plogis(gap, log.p = TRUE) # log(P)
+  log_1mp <- plogis(gap, log.p = TRUE, lower.tail = FALSE) # log(1 - P)
+  
+  # Log-probability of each student's answer pattern at each draw
+  ll_ir <- sapply(1:R, function(r) {
+    rowSums(X * log_p[, r, ] + (1 - X) * log_1mp[, r, ])
+  }) # N * R
+  
+  # Average over draws for each student (log-sum-exp needed for long tests)
+  ll_i <- log(rowMeans(exp(ll_ir))) # length N
+  
+  sum(ll_i)
+}
+
+# ---- Optimization ------------------------------------------------------------
+
+start <- rep(0, J + 1) # all b = 0; log_sigma = 0, i.e. sigma = 1
+names(start) <- c(paste0("b_", 1:J), "log_sigma")
+
+fit <- optim(
+  par     = start,
+  fn      = marginal_log_likelihood,
+  X       = X,
+  draws   = draws,
+  method  = "BFGS",
+  hessian = TRUE,
+  control = list(fnscale = -1, maxit = 1000)
+)
+
+fit$convergence # 0 = converged
+
+# ---- Results -----------------------------------------------------------------
+
+b_mml <- fit$par[1:J]
+round(cbind(true = b_true, mml = b_mml - mean(b_mml)), 2) # centered difficulties
+exp(fit$par["log_sigma"]) # estimated sigma
+
+
+
+
+# ---- Check against mirt ------------------------------------------------------
+
+library(mirt)
+
+fit_mirt <- mirt(as.data.frame(X), model = 1, itemtype = "Rasch", verbose = FALSE)
+pars     <- coef(fit_mirt, IRTpars = TRUE, simplify = TRUE)
+b_mirt     <- pars$items[, "b"]
+sigma_mirt <- sqrt(pars$cov[1, 1])   # mirt reports the variance of theta
+
+round(cbind(true = b_true,
+            mml  = b_mml,
+            mirt = b_mirt), 2)
+
+c(sigma_true = sigma_true,
+  sigma_mml  = unname(exp(fit$par["log_sigma"])),
+  sigma_mirt = sigma_mirt)
+```

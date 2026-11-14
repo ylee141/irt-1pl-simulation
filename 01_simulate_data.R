@@ -18,12 +18,12 @@ J <- 10   # number of test questions
 
 # ---- True parameters ---------------------------------------------------------
 sigma_true <- 2 # standard deviation of the true ability distribution
-theta <- rnorm(n = N, mean = 0, sd = sigma_true)  # abilities, length N
-b     <- seq(-2, 2, length.out = J)      # difficulties, length J
+theta_true <- rnorm(n = N, mean = 0, sd = sigma_true)  # abilities, length N
+b_true     <- seq(-2, 2, length.out = J)      # difficulties, length J
 
 # ---- Response probabilities --------------------------------------------------
 # gap[i, j] = theta[i] - b[j]; rows = students, columns = questions
-gap <- outer(theta, b, "-")  # N x J 
+gap <- outer(theta_true, b_true, "-")  # N x J 
 P   <- plogis(gap)           # Pr(correct) 
 
 # ---- Simulated responses  ----------------------------------------------------

@@ -24,13 +24,11 @@
 
 source("01_simulate_data.R") # creates N, J, theta, b, X
 
-
 # ---- Simulation draws --------------------------------------------------------
 
 # Fixed standard normal draws, R per student, created once outside the
 # likelihood so it stays smooth across optimizer iterations.
 
-set.seed(2)
 R <- 100
 draws <- matrix(rnorm(N * R, 0, 1), nrow = N, ncol = R) # N * R
 
@@ -84,5 +82,28 @@ fit$convergence # 0 = converged
 # ---- Results -----------------------------------------------------------------
 
 b_mml <- fit$par[1:J]
-round(cbind(true = b, mml = b_mml - mean(b_mml)), 2) # centered difficulties
+round(cbind(true = b_true, mml = b_mml - mean(b_mml)), 2) # centered difficulties
 exp(fit$par["log_sigma"]) # estimated sigma
+
+
+
+
+# ---- Check against mirt ------------------------------------------------------
+
+library(mirt)
+
+fit_mirt <- mirt(as.data.frame(X), model = 1, itemtype = "Rasch", verbose = FALSE)
+pars     <- coef(fit_mirt, IRTpars = TRUE, simplify = TRUE)
+b_mirt     <- pars$items[, "b"]
+sigma_mirt <- sqrt(pars$cov[1, 1])   # mirt reports the variance of theta
+
+round(cbind(true = b_true,
+            mml  = b_mml,
+            mirt = b_mirt), 2)
+
+c(sigma_true = sigma_true,
+  sigma_mml  = unname(exp(fit$par["log_sigma"])),
+  sigma_mirt = sigma_mirt)
+
+
+
