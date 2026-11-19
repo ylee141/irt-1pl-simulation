@@ -60,7 +60,7 @@ format:
     - Places readers and books on the same scale.
     - A reader at 800L is matched with books near 800L. At that match, the reader is expected to understand about 75% of the text.
 
-<!-- TODO: Lexile diagram (texts on a Lexile difficulty scale), from the Doc -->
+![Texts on a Lexile difficulty scale](figures/lexile.svg)
 
 ## Modeling
 
@@ -113,7 +113,7 @@ format:
 - A question is also called an item, as is standard in IRT.
 - The item characteristic curve (ICC) plots $P(\text{correct})$ against ability $\theta$ for one item.
 
-<!-- TODO: ICC plot for three items (an R chunk with plogis(theta - b) for a few b's) -->
+![Item characteristic curves for three items](figures/icc.svg)
 
 - Every item has the same S-shaped curve, shifted along by its difficulty $b_j$.
 - Each curve crosses 50% at $\theta = b_j$: a harder item sits further right.
