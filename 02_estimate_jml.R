@@ -19,7 +19,7 @@
 #                   = logistic(theta[i] - b[j])
 # ==============================================================================
 
-source("01_simulate_data.R")  # creates N, J, theta, b, X
+source("01_simulate_data.R")  # creates N, J, sigma_true, theta_true, b_true, X
 
 # ---- log-likelihood ----------------------------------------------------------
 
@@ -58,7 +58,7 @@ idx_b <- (N_fit + 1):(N_fit + J - 1)   # positions of the free difficulties
 # Nelder-Mead uses function values only and was far too slow with ~500 params.
 start <- rep(0, N_fit + J - 1)  # start all parameters at 0
 
-fit <- optim(
+fit_jml <- optim(
   par = start,
   fn =joint_log_likelihood, 
   X=X_fit, 
@@ -67,7 +67,7 @@ fit <- optim(
   control = list(fnscale = -1, maxit = 1000)
 ) 
 
-fit$convergence  # 0 = converged
+fit_jml$convergence  # 0 = converged
 
 # ---- Estimates and bias correction -------------------------------------------
 
@@ -79,7 +79,7 @@ fit$convergence  # 0 = converged
 # scale of b (by about J / (J - 1)). Multiplying by (J - 1) / J is an
 # approximate correction.
 
-b_free     <- fit$par[idx_b]
+b_free     <- fit_jml$par[idx_b]
 b_hat      <- c(b_free, -sum(b_free))
 b_hat_corr <- b_hat * (J - 1) / J  # approximate JML bias correction
 
@@ -95,7 +95,7 @@ b_se_corr <- b_se * (J - 1) / J
 
 # ---- Results -----------------------------------------------------------------
 
-round(cbind(true      = b,
+round(cbind(true      = b_true,
             estimate  = b_hat,
             corrected = b_hat_corr,
             se_corr   = b_se_corr), 2)

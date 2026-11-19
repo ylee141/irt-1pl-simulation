@@ -4,10 +4,12 @@
 # Conventions
 #   i = 1, ..., N : students (rows)
 #   j = 1, ..., J : questions (columns)
-#   theta[i]      : ability of student i
-#   sigma_true    : standard deviation of the true ability distribution
-#   b[j]          : difficulty of question j
-#   P[i, j]       : probability of student i getting question j correctly
+#   sigma_true    : SD of the true abilities, theta_true ~ N(0, sigma_true^2)
+#   theta_true[i] : true ability of student i
+#   b_true[j]     : true difficulty of question j
+#   P[i, j]       : probability that student i answers question j correctly
+#                   = logistic(theta_true[i] - b_true[j])
+#   X             : N x J matrix of simulated responses (the gradebook)
 # ==============================================================================
 
 set.seed(1)

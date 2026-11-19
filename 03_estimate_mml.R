@@ -22,13 +22,14 @@
 #                   = logistic(theta[i, r] - b[j])
 # ==============================================================================
 
-source("01_simulate_data.R") # creates N, J, theta, b, X
+source("01_simulate_data.R")  # creates N, J, sigma_true, theta_true, b_true, X
 
 # ---- Simulation draws --------------------------------------------------------
 
 # Fixed standard normal draws, R per student, created once outside the
 # likelihood so it stays smooth across optimizer iterations.
 
+set.seed(2) 
 R <- 100
 draws <- matrix(rnorm(N * R, 0, 1), nrow = N, ncol = R) # N * R
 
@@ -67,7 +68,7 @@ marginal_log_likelihood <- function(params, X, draws) {
 start <- rep(0, J + 1) # all b = 0; log_sigma = 0, i.e. sigma = 1
 names(start) <- c(paste0("b_", 1:J), "log_sigma")
 
-fit <- optim(
+fit_mml <- optim(
   par     = start,
   fn      = marginal_log_likelihood,
   X       = X,
@@ -77,11 +78,11 @@ fit <- optim(
   control = list(fnscale = -1, maxit = 1000)
 )
 
-fit$convergence # 0 = converged
+fit_mml$convergence # 0 = converged
 
 # ---- Results -----------------------------------------------------------------
 
-b_mml <- fit$par[1:J]
+b_mml <- fit_mml$par[1:J]
 round(cbind(true = b_true, mml = b_mml - mean(b_mml)), 2) # centered difficulties
 exp(fit$par["log_sigma"]) # estimated sigma
 
