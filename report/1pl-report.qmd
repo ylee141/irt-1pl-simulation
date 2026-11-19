@@ -379,7 +379,88 @@ $$
 
 ## Results
 
-<!-- TODO: run the scripts in code chunks, then the table (true vs. JML raw vs. corrected vs. MML vs. mirt) and sigma-hat -->
+```{r}
+#| label: run-jml
+#| include: false
+source("02_estimate_jml.R")
+
+# Save the JML results before the MML script overwrites shared names
+jml <- list(
+  b_raw     = b_hat,
+  b_corr    = b_hat_corr,
+  se_corr   = b_se_corr,
+  n_dropped = sum(!keep)
+)
+```
+
+```{r}
+#| label: run-mml
+#| include: false
+source("03_estimate_mml.R")
+
+# Center the MML and mirt difficulties so they share the true values' zero
+mml       <- list(b = b_mml - mean(b_mml), sigma = unname(exp(fit_mml$par["log_sigma"])))
+mirt_res  <- list(b = b_mirt - mean(b_mirt), sigma = unname(sigma_mirt))
+
+# Slope of estimates on true values: 1 = no stretching
+slope <- function(est) unname(coef(lm(est ~ b_true))[2])
+```
+
+### Data check
+
+- JML dropped `r jml$n_dropped` of the `r N` students for perfect or zero scores. MML keeps all `r N`.
+- The share of correct answers falls from `r round(max(colMeans(X)), 2)` on the easiest item to `r round(min(colMeans(X)), 2)` on the hardest, as the difficulties rise.
+
+### Item difficulties
+
+```{r}
+#| label: tbl-b
+#| echo: false
+#| tbl-cap: "True and estimated item difficulties"
+knitr::kable(
+  data.frame(
+    Item            = 1:J,
+    True            = b_true,
+    `JML raw`       = jml$b_raw,
+    `JML corrected` = jml$b_corr,
+    `SE (corrected)` = jml$se_corr,
+    MML             = mml$b,
+    mirt            = mirt_res$b,
+    check.names = FALSE
+  ),
+  digits = 2,
+  row.names = FALSE
+)
+```
+
+```{r}
+#| label: fig-b
+#| echo: false
+#| fig-cap: "Estimated against true difficulties. Points on the dashed line match the truth."
+lims <- range(b_true, jml$b_raw, jml$b_corr, mml$b)
+plot(b_true, jml$b_raw, pch = 1, col = "grey40", xlim = lims, ylim = lims,
+     xlab = "true b", ylab = "estimated b")
+points(b_true, jml$b_corr, pch = 16, col = "steelblue")
+points(b_true, mml$b, pch = 17, col = "darkorange")
+abline(0, 1, lty = 2)
+legend("topleft", legend = c("JML raw", "JML corrected", "MML"),
+       pch = c(1, 16, 17), col = c("grey40", "steelblue", "darkorange"), bty = "n")
+```
+
+- JML without correction is stretched outward: regressing its estimates on the true values gives a slope of `r round(slope(jml$b_raw), 2)`, against the $J/(J-1) =$ `r round(J / (J - 1), 2)` that Estimation predicts.
+- The $(J-1)/J$ correction brings the slope to `r round(slope(jml$b_corr), 2)`.
+- MML, with no correction, gives a slope of `r round(slope(mml$b), 2)`.
+- The largest difference between our MML and mirt on any item is `r round(max(abs(mml$b - mirt_res$b)), 3)`.
+
+### Spread of ability
+
+- The true $\sigma$ is `r sigma_true`. Our MML estimates `r round(mml$sigma, 3)`, and mirt `r round(mirt_res$sigma, 3)`.
+- Under the SD convention, the same fit gives $\hat a = \hat\sigma \approx$ `r round(mml$sigma, 2)`, with every $\hat\theta_i$ and $\hat b_j$ divided by $\hat\sigma$ (see Identification).
+
+### Limitation
+
+- These numbers come from one simulated dataset. With $N =$ `r N`, part of each gap between an estimate and the truth is chance, so one run cannot fully separate JML's bias from noise.
+- Repeating the simulation many times and averaging would separate the two.
 
 ## Discussion
 
