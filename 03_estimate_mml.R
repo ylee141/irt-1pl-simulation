@@ -84,7 +84,7 @@ fit_mml$convergence # 0 = converged
 
 b_mml <- fit_mml$par[1:J]
 round(cbind(true = b_true, mml = b_mml - mean(b_mml)), 2) # centered difficulties
-exp(fit$par["log_sigma"]) # estimated sigma
+exp(fit_mml$par["log_sigma"]) # estimated sigma
 
 
 
@@ -103,7 +103,7 @@ round(cbind(true = b_true,
             mirt = b_mirt), 2)
 
 c(sigma_true = sigma_true,
-  sigma_mml  = unname(exp(fit$par["log_sigma"])),
+  sigma_mml  = unname(exp(fit_mml$par["log_sigma"])),
   sigma_mirt = sigma_mirt)
 
 

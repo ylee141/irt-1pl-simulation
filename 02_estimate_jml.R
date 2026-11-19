@@ -85,7 +85,7 @@ b_hat_corr <- b_hat * (J - 1) / J  # approximate JML bias correction
 
 # ---- Standard errors ---------------------------------------------------------
 
-V       <- solve(-fit$hessian)  # variance matrix of all estimates
+V       <- solve(-fit_jml$hessian)  # variance matrix of all estimates
 V_b     <- V[idx_b, idx_b]
 se_free <- sqrt(diag(V_b))
 se_last <- sqrt(sum(V_b))       # Var(-sum(b_free)) = sum of all entries of V_b
