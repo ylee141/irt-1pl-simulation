@@ -10,3 +10,5 @@
 report/*.html
 report/*.rmarkdown
 report/*_files/
+
+_site/

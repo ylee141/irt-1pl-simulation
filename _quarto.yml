@@ -1,2 +1,5 @@
 project:
+  type: website
   execute-dir: project
+  render:
+    - report/1pl-report.qmd
