@@ -511,7 +511,7 @@ knitr::kable(
 
 - Same core: the 1PL is a binary logit. Student $i$ answers question $j$ correctly when $U_{ij} = \theta_i - b_j + \xi_{ij} > 0$, with $\xi_{ij}$ standard logistic.
 - Different purpose:
-  - Discrete choice estimates preferences to predict choices in new situations (new prices, new products).
+  - Discrete choice estimates preferences to understand how people choose and to predict choices in new situations (new prices, new products).
   - IRT estimates abilities and difficulties to measure students and questions on one scale.
 - So the burden of justification differs:
   - Counterfactuals go beyond the data, so a utility function needs strong theoretical justification.
