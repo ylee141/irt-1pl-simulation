@@ -14,7 +14,7 @@ The MML estimates and their standard errors are checked against the `mirt` packa
 | File | What it does |
 |---|---|
 | `01_simulate_data.R` | Simulates 500 students answering 10 items, with known abilities and difficulties |
-| `02_estimate_jml.R` | Estimates the model by JML, with the (J − 1)/J bias correction and standard errors |
+| `02_estimate_jml.R` | Estimates the model by JML, with the bias correction and standard errors |
 | `03_estimate_mml.R` | Estimates the model by MML, with standard errors, and compares the results with `mirt` |
 | `report/1pl-report.qmd` | The report (see below) |
 
@@ -30,7 +30,7 @@ The MML estimates and their standard errors are checked against the `mirt` packa
 - **Results and Discussion:** the simulation comparison, and what comes next.
 - **Side note:** how the 1PL relates to discrete choice models in economics.
 
-## Running it
+## How to run
 
 `02_estimate_jml.R` and `03_estimate_mml.R` each run `01_simulate_data.R` first to create the simulated data, so either can be run on its own. The check in `03_estimate_mml.R` needs the `mirt` package.
 
