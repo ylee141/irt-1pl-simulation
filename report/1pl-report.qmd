@@ -1,5 +1,6 @@
 ---
 title: "1PL IRT concepts and estimation"
+subtitle: "A primer and a simulation study"
 author: "Youngjun Lee"
 date: 2026-11-17
 format:
@@ -7,6 +8,10 @@ format:
     toc: true
     toc-depth: 3
 ---
+
+Purpose: to build up item response theory from the ground up, starting with the 1PL. Each modeling choice comes with its justification and an intuitive picture, and the ideas are connected to econometrics. Simulations, with estimators written from scratch and checked against standard software, test the understanding along the way. The note grows as new topics are added.
+
+Code: [github.com/ylee141/irt-1pl-simulation](https://github.com/ylee141/irt-1pl-simulation)
 
 ## Introduction
 
@@ -21,7 +26,7 @@ format:
 - The most common evidence is answers to questions:
   - the same questions can be given to many students,
   - answers can be scored easily,
-  - scores can be compared across students.
+  - scores can be compared across students (when everyone takes the same test).
 
 ### Goal
 
@@ -342,6 +347,7 @@ $$
 ## Simulation setup
 
 - We simulate a gradebook from a known 1PL model, estimate it with JML and MML, and compare the estimates with the true values.
+- The code: [`01_simulate_data.R`](https://github.com/ylee141/irt-1pl-simulation/blob/main/01_simulate_data.R), [`02_estimate_jml.R`](https://github.com/ylee141/irt-1pl-simulation/blob/main/02_estimate_jml.R), [`03_estimate_mml.R`](https://github.com/ylee141/irt-1pl-simulation/blob/main/03_estimate_mml.R).
 
 ### Data
 
@@ -501,7 +507,7 @@ knitr::kable(
 
 ## Side note: IRT vs. discrete choice
 
-- Same core: the 1PL is a binary logit. Student $i$ answers question $j$ correctly when $U_{ij} = \theta_i - b_j + \xi_{ij} > 0$, with $\xi$ standard logistic.
+- Same core: the 1PL is a binary logit. Student $i$ answers question $j$ correctly when $U_{ij} = \theta_i - b_j + \xi_{ij} > 0$, with $\xi_{ij}$ standard logistic.
 - Different purpose:
   - Discrete choice estimates preferences to predict choices in new situations (new prices, new products).
   - IRT estimates abilities and difficulties to measure students and questions on one scale.
@@ -513,4 +519,3 @@ knitr::kable(
 - Scale of the idiosyncratic term: in both, only gaps relative to it are identified, so its scale is fixed by convention.
   - In discrete choice (e.g. BLP), the parameters are a means to scale-free quantities: elasticities, markups, and willingness to pay are ratios or functions of choice probabilities, and price converts utility into dollars. So the scale rarely matters.
   - In IRT, the parameters are the measurement itself: $\theta_i$ and $b_j$ are reported as scores and difficulties, with no price to supply a natural unit. So the unit set by the idiosyncratic term is the unit of the reported numbers.
-
