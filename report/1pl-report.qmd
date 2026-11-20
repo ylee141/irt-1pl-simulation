@@ -506,6 +506,8 @@ knitr::kable(
   - Checking the model: item fit statistics, residual correlations for local independence, and DIF tests.
   - Score function, Hessian and information: where the estimates and standard errors come from, why the raw score is sufficient in the 1PL, and the updates that move each estimate by (observed $-$ expected score) / information: Newton–Raphson for JML, and EM for MML, where the expected score is averaged over each student's posterior.
   - Scoring students and reliability: ML, EAP and MAP scores, their standard errors, and separation reliability.
+    - Applying real data: fit the 1PL to an actual response dataset (possibly, LSAT7 that ships with mirt), and look at how IRT is used in practice - such as adaptive testing and linking test forms.
+
 
 ## Side note: IRT vs. discrete choice
 
