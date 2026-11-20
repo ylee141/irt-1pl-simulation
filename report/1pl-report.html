@@ -6,8 +6,10 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+<meta name="author" content="Youngjun Lee">
+<meta name="dcterms.date" content="2026-11-17">
 
-<title>“Estimating the 1PL model: JML vs.&nbsp;MML”</title>
+<title>1PL IRT concepts and estimation</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -26,41 +28,6 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-/* CSS for syntax highlighting */
-html { -webkit-text-size-adjust: 100%; }
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
-}
-pre.numberSource code
-  { counter-reset: source-line 0; }
-pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-  }
-pre.numberSource { margin-left: 3em;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
-}
 </style>
 
 
@@ -77,25 +44,119 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="1pl-report_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="1pl-report_files/libs/bootstrap/bootstrap-7a1ba01e1618e08d8f307002997fc2d6.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 </head>
 
-<body class="fullcontent quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
+<body class="quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
 
 <div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
-
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a>
+  <ul class="collapse">
+  <li><a href="#motivation" id="toc-motivation" class="nav-link" data-scroll-target="#motivation">Motivation</a></li>
+  <li><a href="#goal" id="toc-goal" class="nav-link" data-scroll-target="#goal">Goal</a></li>
+  <li><a href="#problem" id="toc-problem" class="nav-link" data-scroll-target="#problem">Problem</a></li>
+  <li><a href="#solution" id="toc-solution" class="nav-link" data-scroll-target="#solution">Solution</a></li>
+  </ul></li>
+  <li><a href="#modeling" id="toc-modeling" class="nav-link" data-scroll-target="#modeling">Modeling</a>
+  <ul class="collapse">
+  <li><a href="#setup" id="toc-setup" class="nav-link" data-scroll-target="#setup">Setup</a></li>
+  <li><a href="#choosing-a-form" id="toc-choosing-a-form" class="nav-link" data-scroll-target="#choosing-a-form">Choosing a form</a></li>
+  <li><a href="#the-one-parameter-logistic-1pl-model" id="toc-the-one-parameter-logistic-1pl-model" class="nav-link" data-scroll-target="#the-one-parameter-logistic-1pl-model">The one-parameter logistic (1PL) model</a></li>
+  <li><a href="#item-characteristic-curve-icc" id="toc-item-characteristic-curve-icc" class="nav-link" data-scroll-target="#item-characteristic-curve-icc">Item characteristic curve (ICC)</a></li>
+  <li><a href="#latent-variable-formulation-and-the-role-of-luck" id="toc-latent-variable-formulation-and-the-role-of-luck" class="nav-link" data-scroll-target="#latent-variable-formulation-and-the-role-of-luck">Latent variable formulation and the role of luck</a></li>
+  </ul></li>
+  <li><a href="#assumptions" id="toc-assumptions" class="nav-link" data-scroll-target="#assumptions">Assumptions</a>
+  <ul class="collapse">
+  <li><a href="#structure" id="toc-structure" class="nav-link" data-scroll-target="#structure">Structure</a></li>
+  <li><a href="#independence" id="toc-independence" class="nav-link" data-scroll-target="#independence">Independence</a></li>
+  <li><a href="#invariance" id="toc-invariance" class="nav-link" data-scroll-target="#invariance">Invariance</a></li>
+  </ul></li>
+  <li><a href="#identification" id="toc-identification" class="nav-link" data-scroll-target="#identification">Identification</a>
+  <ul class="collapse">
+  <li><a href="#location-and-scale" id="toc-location-and-scale" class="nav-link" data-scroll-target="#location-and-scale">Location and scale</a></li>
+  </ul></li>
+  <li><a href="#estimation" id="toc-estimation" class="nav-link" data-scroll-target="#estimation">Estimation</a>
+  <ul class="collapse">
+  <li><a href="#joint-maximum-likelihood-jml" id="toc-joint-maximum-likelihood-jml" class="nav-link" data-scroll-target="#joint-maximum-likelihood-jml">Joint Maximum Likelihood (JML)</a></li>
+  <li><a href="#marginal-maximum-likelihood-mml" id="toc-marginal-maximum-likelihood-mml" class="nav-link" data-scroll-target="#marginal-maximum-likelihood-mml">Marginal Maximum Likelihood (MML)</a></li>
+  </ul></li>
+  <li><a href="#simulation-setup" id="toc-simulation-setup" class="nav-link" data-scroll-target="#simulation-setup">Simulation setup</a>
+  <ul class="collapse">
+  <li><a href="#data" id="toc-data" class="nav-link" data-scroll-target="#data">Data</a></li>
+  <li><a href="#jml" id="toc-jml" class="nav-link" data-scroll-target="#jml">JML</a></li>
+  <li><a href="#mml" id="toc-mml" class="nav-link" data-scroll-target="#mml">MML</a></li>
+  </ul></li>
+  <li><a href="#results" id="toc-results" class="nav-link" data-scroll-target="#results">Results</a>
+  <ul class="collapse">
+  <li><a href="#data-check" id="toc-data-check" class="nav-link" data-scroll-target="#data-check">Data check</a></li>
+  <li><a href="#item-difficulties" id="toc-item-difficulties" class="nav-link" data-scroll-target="#item-difficulties">Item difficulties</a></li>
+  <li><a href="#checking-mml-against-mirt" id="toc-checking-mml-against-mirt" class="nav-link" data-scroll-target="#checking-mml-against-mirt">Checking MML against mirt</a></li>
+  <li><a href="#spread-of-ability" id="toc-spread-of-ability" class="nav-link" data-scroll-target="#spread-of-ability">Spread of ability</a></li>
+  <li><a href="#limitation" id="toc-limitation" class="nav-link" data-scroll-target="#limitation">Limitation</a></li>
+  </ul></li>
+  <li><a href="#discussion" id="toc-discussion" class="nav-link" data-scroll-target="#discussion">Discussion</a></li>
+  <li><a href="#side-note-irt-vs.-discrete-choice" id="toc-side-note-irt-vs.-discrete-choice" class="nav-link" data-scroll-target="#side-note-irt-vs.-discrete-choice">Side note: IRT vs.&nbsp;discrete choice</a></li>
+  </ul>
+</nav>
+</div>
 <main class="content" id="quarto-document-content" tabindex="-1">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">“Estimating the 1PL model: JML vs.&nbsp;MML”</h1>
+<h1 class="title">1PL IRT concepts and estimation</h1>
 </div>
 
 
 
 <div class="quarto-title-meta">
 
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Youngjun Lee </p>
+          </div>
+  </div>
     
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">November 17, 2026</p>
+    </div>
+  </div>
   
     
   </div>
@@ -105,181 +166,803 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<section id="quarto" class="level2">
-<h2 class="anchored" data-anchor-id="quarto">Quarto</h2>
-<p>Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <a href="https://quarto.org" class="uri">https://quarto.org</a>.</p>
+<section id="introduction" class="level2">
+<h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
+<section id="motivation" class="level3">
+<h3 class="anchored" data-anchor-id="motivation">Motivation</h3>
+<ul>
+<li>Schools and testing programs need to know where students stand, to:
+<ul>
+<li>admit them,</li>
+<li>place them in the right classes,</li>
+<li>decide what to teach next,</li>
+<li>track their progress.</li>
+</ul></li>
+<li>Oftentimes, a student’s ability (e.g.&nbsp;in reading or math) can’t be observed directly, so it has to be inferred from evidence.</li>
+<li>The most common evidence is answers to questions:
+<ul>
+<li>the same questions can be given to many students,</li>
+<li>answers can be scored easily,</li>
+<li>scores can be compared across students.</li>
+</ul></li>
+</ul>
 </section>
-<section id="running-code" class="level2">
-<h2 class="anchored" data-anchor-id="running-code">Running Code</h2>
-<p>When you click the <strong>Render</strong> button a document will be generated that includes both content and the output of embedded code. You can embed code like this:</p>
+<section id="goal" class="level3">
+<h3 class="anchored" data-anchor-id="goal">Goal</h3>
+<ul>
+<li>Estimate a student’s “ability” from their answers to test questions,
+<ul>
+<li><strong>reliably:</strong> consistently, with small measurement error,</li>
+<li><strong>practically:</strong> still working when tests change over time, so an estimate means the same thing whichever questions were answered.</li>
+</ul></li>
+</ul>
+</section>
+<section id="problem" class="level3">
+<h3 class="anchored" data-anchor-id="problem">Problem</h3>
+<ul>
+<li>Answers mix two things we normally can’t observe: the student’s ability and the questions’ difficulty.
+<ul>
+<li>Students often take different test sets (to prevent copying, to fit each student’s level, to update content).</li>
+<li>9/10 on an easy set vs.&nbsp;6/10 on a hard set: is the first a strong student, or were the questions easy?</li>
+<li>Raw scores can’t tell the two apart, so they can’t compare students who took different sets.</li>
+</ul></li>
+<li>So we need to separate ability from difficulty, using the answers alone.</li>
+<li>To picture what ability and difficulty could mean, compare three settings:</li>
+</ul>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Setting</th>
+<th>Difficulty</th>
+<th>Ability</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>D&amp;D skill check</td>
+<td>observable: the number the dice roll must reach</td>
+<td>observable: the character’s skill bonus added to the roll</td>
+</tr>
+<tr class="even">
+<td>Weightlifting</td>
+<td>observable: the weight on the bar</td>
+<td>not observable</td>
+</tr>
+<tr class="odd">
+<td>Answering a test question</td>
+<td>not observable</td>
+<td>not observable</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>What the table shows:
+<ul>
+<li>In all three, we see whether the attempt succeeded.</li>
+<li>In some settings, we can directly observe the difficulty or the ability. These can help build a concrete picture of what difficulty and ability could mean in a test.</li>
+<li>In a test, both difficulty and ability are unobserved and need to be estimated from the observed answers.</li>
+</ul></li>
+</ul>
+</section>
+<section id="solution" class="level3">
+<h3 class="anchored" data-anchor-id="solution">Solution</h3>
+<ul>
+<li>Since ability and difficulty can’t be observed directly, we estimate them from the answers through a model, in three steps:
+<ul>
+<li>We give each student an ability <span class="math inline">\(\theta_i\)</span> and each question a difficulty <span class="math inline">\(b_j\)</span>.</li>
+<li>We create a map from ability and difficulty to the probability of a student answering a question correctly.</li>
+<li>We back out the parameters using likelihood maximization.</li>
+</ul></li>
+<li>Because each question keeps its own difficulty, students who answered different sets of questions can be placed on one scale.
+<ul>
+<li>It would be very frustrating if a lifter’s ability (the most she can usually lift, in kilograms) and the weight on the bar were on different scales: we could not compare lifters who attempted different weights.</li>
+</ul></li>
+<li>The shared scale also lets a student be compared directly with any question, so students can be matched with material at their level.
+<ul>
+<li>For a real world example, the Lexile framework:
+<ul>
+<li>Places readers and books on the same scale.</li>
+<li>A reader at 800L is matched with books near 800L. At that match, the reader is expected to understand about 75% of the text.</li>
+</ul></li>
+</ul></li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="figures/lexile.svg" class="img-fluid figure-img"></p>
+<figcaption>Texts on a Lexile difficulty scale</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="modeling" class="level2">
+<h2 class="anchored" data-anchor-id="modeling">Modeling</h2>
+<section id="setup" class="level3">
+<h3 class="anchored" data-anchor-id="setup">Setup</h3>
+<ul>
+<li><span class="math inline">\(N\)</span> students each answer <span class="math inline">\(J\)</span> questions. The answers form a gradebook: a table <span class="math inline">\(X\)</span> with one row per student and one column per question.</li>
+<li><span class="math inline">\(X_{ij} = 1\)</span> if student <span class="math inline">\(i\)</span> answers question <span class="math inline">\(j\)</span> correctly, and 0 otherwise.</li>
+<li>For example, with 4 students and 3 questions:</li>
+</ul>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th style="text-align: center;">Q1</th>
+<th style="text-align: center;">Q2</th>
+<th style="text-align: center;">Q3</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Ann</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">0</td>
+</tr>
+<tr class="even">
+<td>Ben</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr class="odd">
+<td>Cal</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">0</td>
+</tr>
+<tr class="even">
+<td>Dan</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>We observe <span class="math inline">\(X\)</span>. The unknowns are an ability <span class="math inline">\(\theta_i\)</span> for each student and a difficulty <span class="math inline">\(b_j\)</span> for each question.</li>
+</ul>
+</section>
+<section id="choosing-a-form" class="level3">
+<h3 class="anchored" data-anchor-id="choosing-a-form">Choosing a form</h3>
+<ul>
+<li>We choose a functional form linking <span class="math inline">\(\theta_i\)</span> and <span class="math inline">\(b_j\)</span> to the probability of a correct answer.</li>
+<li>A good form lets us estimate the parameters well enough to inform decisions. Among those, we prefer one that is:
+<ul>
+<li>simple: easier to estimate and to check,</li>
+<li>interpretable: each parameter has a clear meaning.</li>
+</ul></li>
+<li>We look for a function <span class="math inline">\(f\)</span> with <span class="math inline">\(P(X_{ij} = 1 \mid \theta_i, b_j) = f(\theta_i, b_j)\)</span> that satisfies:
+<ul>
+<li><span class="math inline">\(f\)</span> gives a valid probability, strictly between 0 and 1, for any values of <span class="math inline">\(\theta_i\)</span> and <span class="math inline">\(b_j\)</span>.</li>
+<li><span class="math inline">\(f\)</span> increases in <span class="math inline">\(\theta_i\)</span> and decreases in <span class="math inline">\(b_j\)</span> (monotonicity).</li>
+</ul></li>
+</ul>
+</section>
+<section id="the-one-parameter-logistic-1pl-model" class="level3">
+<h3 class="anchored" data-anchor-id="the-one-parameter-logistic-1pl-model">The one-parameter logistic (1PL) model</h3>
+<ul>
+<li><p>The simplest model has only <span class="math inline">\(\theta_i\)</span> and <span class="math inline">\(b_j\)</span> as parameters: one per student and one per question.</p></li>
+<li><p><span class="math inline">\(f\)</span> depends on the two only through their gap, <span class="math inline">\(\theta_i - b_j\)</span>.</p>
+<ul>
+<li>Why: it is a simple way to combine the two. A more complex form is worth it only if it brings a clear benefit.</li>
+<li>Students and questions sit on one scale, so they can be compared directly (as in the Lexile example).</li>
+</ul></li>
+<li><p>We choose the logistic function of the gap, which is the standard choice:</p>
+<p><span class="math display">\[
+P(X_{ij} = 1 \mid \theta_i, b_j) = \frac{\exp(\theta_i - b_j)}{1 + \exp(\theta_i - b_j)}
+\]</span></p>
+<ul>
+<li>It gives a probability strictly between 0 and 1 for any gap, and rises with the gap, so it meets both requirements.</li>
+<li>Among such functions, it is the simplest to work with and the easiest to read.</li>
+<li>One parameter per question (<span class="math inline">\(b_j\)</span>) and the logistic function: hence the name one-parameter logistic (1PL).</li>
+</ul></li>
+<li><p>The log-odds equals the gap: <span class="math inline">\(\log\big(P / (1 - P)\big) = \theta_i - b_j\)</span>. So one unit of gap multiplies the odds of a correct answer by <span class="math inline">\(e\)</span> (about 2.7).</p></li>
+<li><p>When <span class="math inline">\(\theta_i = b_j\)</span>, the chance is 50%. So the difficulty <span class="math inline">\(b_j\)</span> is the ability level at which a student has a 50% chance of answering question <span class="math inline">\(j\)</span> correctly.</p></li>
+<li><p>So <span class="math inline">\(\theta_i\)</span> and <span class="math inline">\(b_j\)</span> are defined through each other: only their gap has a meaning on its own.</p></li>
+</ul>
+</section>
+<section id="item-characteristic-curve-icc" class="level3">
+<h3 class="anchored" data-anchor-id="item-characteristic-curve-icc">Item characteristic curve (ICC)</h3>
+<ul>
+<li>A question is also called an item, as is standard in IRT.</li>
+<li>The item characteristic curve (ICC) plots <span class="math inline">\(P(\text{correct})\)</span> against ability <span class="math inline">\(\theta\)</span> for one item.</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="figures/icc.svg" class="img-fluid figure-img"></p>
+<figcaption>Item characteristic curves for three items</figcaption>
+</figure>
+</div>
+<ul>
+<li>Every item has the same S-shaped curve, shifted along by its difficulty <span class="math inline">\(b_j\)</span>.</li>
+<li>Each curve crosses 50% at <span class="math inline">\(\theta = b_j\)</span>: a harder item sits further right.</li>
+<li>The curves never cross, which implies that every student agrees on which item is harder.</li>
+</ul>
+</section>
+<section id="latent-variable-formulation-and-the-role-of-luck" class="level3">
+<h3 class="anchored" data-anchor-id="latent-variable-formulation-and-the-role-of-luck">Latent variable formulation and the role of luck</h3>
+<ul>
+<li>The 1PL gives only the chance of a correct answer.
+<ul>
+<li>The same student could get the same item right one day and wrong another. Whatever decides each answer beyond ability and difficulty, we call the idiosyncratic term: it covers anything specific to this student and item, luck in particular.</li>
+</ul></li>
+<li>In some settings, this term can be observed:
+<ul>
+<li>D&amp;D skill check: the character succeeds when skill bonus + die roll <span class="math inline">\(\ge\)</span> the number to reach. The die roll is the luck: every character rolls the same die. With a d4 the bonus decides most checks, while with a d20 the roll often does.</li>
+<li>Weightlifting: the lifter makes the lift when the most she can usually lift + this attempt’s luck <span class="math inline">\(\ge\)</span> the weight on the bar. The luck is how well that one lift goes, measured in kilograms.</li>
+</ul></li>
+<li>In most tests, it can’t be seen, but we write each answer the same way, through an underlying latent variable <span class="math inline">\(Z_{ij}\)</span>:</li>
+</ul>
+<p><span class="math display">\[
+Z_{ij} = a(\theta_i - b_j) + \varepsilon_{ij}, \qquad X_{ij} = \mathbf{1}\{Z_{ij} \ge 0\}
+\]</span></p>
+<ul>
+<li><span class="math inline">\(\varepsilon_{ij}\)</span> is the idiosyncratic term, and the student answers correctly when <span class="math inline">\(Z_{ij} \ge 0\)</span>.</li>
+<li>We observe only <span class="math inline">\(X_{ij}\)</span>, so the data show the gap only relative to <span class="math inline">\(\varepsilon_{ij}\)</span>.
+<ul>
+<li><span class="math inline">\(a\)</span> sets the balance: with a large <span class="math inline">\(a\)</span>, the gap decides almost every answer and luck matters little; as <span class="math inline">\(a \to 0\)</span>, every answer becomes a coin toss.</li>
+<li>So <span class="math inline">\(a\)</span> measures how sharply an item separates stronger students from weaker ones. This is why <span class="math inline">\(a\)</span> is called the discrimination.</li>
+<li>The 1PL uses the same <span class="math inline">\(a\)</span> for every item, so it is implicitly assumed that every item is equally informative. Letting <span class="math inline">\(a\)</span> differ by item, as <span class="math inline">\(a_j\)</span>, gives the two-parameter logistic (2PL) model.</li>
+<li>So the answers pin down only <span class="math inline">\(a(\theta_i - b_j)\)</span> compared with <span class="math inline">\(\varepsilon_{ij}\)</span>, and a unit has to be fixed before anything can be estimated.</li>
+</ul></li>
+<li>For 1PL, we take <span class="math inline">\(\varepsilon_{ij}\)</span> to be standard logistic.
+<ul>
+<li>This gives back the 1PL formula: <span class="math inline">\(P(X_{ij} = 1) = P(Z_{ij} \ge 0) = \Lambda\big(a(\theta_i - b_j)\big)\)</span>.</li>
+<li>Its mean and spread are conventions: the mean sets the zero of the scale, and the spread, together with <span class="math inline">\(a\)</span>, sets the unit (see Identification).</li>
+</ul></li>
+<li>The systematic part is simple, so most of the model’s assumptions are about <span class="math inline">\(\varepsilon_{ij}\)</span>. The next section lists them together with the other assumptions.</li>
+</ul>
+</section>
+</section>
+<section id="assumptions" class="level2">
+<h2 class="anchored" data-anchor-id="assumptions">Assumptions</h2>
+<ul>
+<li>We need specific assumptions to hold for the model to work.</li>
+<li>Recall the model, with the idiosyncratic term written out:</li>
+</ul>
+<p><span class="math display">\[
+P(X_{ij} = 1 \mid \theta_i, b_j) = \Lambda\big(a(\theta_i - b_j)\big), \qquad Z_{ij} = a(\theta_i - b_j) + \varepsilon_{ij}, \quad X_{ij} = \mathbf{1}\{Z_{ij} \ge 0\}
+\]</span></p>
+<section id="structure" class="level3">
+<h3 class="anchored" data-anchor-id="structure">Structure</h3>
+<ul>
+<li><p>Unidimensionality: a single ability drives every answer.</p>
+<p><span class="math display">\[
+P(X_{ij} = 1 \mid \theta_i, \nu_i) = P(X_{ij} = 1 \mid \theta_i) \quad \text{for any other student trait } \nu_i
+\]</span></p>
+<ul>
+<li>Once <span class="math inline">\(\theta_i\)</span> is known, nothing else about the student changes the chance.</li>
+<li>Violation: a math test with long word problems also draws on reading. Two students with the same math ability but different reading ability then have different chances on those items.</li>
+</ul></li>
+<li><p>Monotonicity: a stronger student is never less likely to answer correctly.</p>
+<p><span class="math display">\[
+\frac{\partial}{\partial \theta_i} P(X_{ij} = 1 \mid \theta_i, b_j) &gt; 0
+\]</span></p>
+<ul>
+<li>The 1PL builds this in, since <span class="math inline">\(a &gt; 0\)</span>.</li>
+<li>Violation: a trick question that strong students overthink, so weaker students do better on it.</li>
+</ul></li>
+<li><p>Functional form: the chance follows the logistic curve.</p>
+<p><span class="math display">\[
+\varepsilon_{ij} \sim \text{Logistic}(0, 1) \;\Rightarrow\; P(X_{ij} = 1 \mid \theta_i, b_j) = \Lambda\big(a(\theta_i - b_j)\big)
+\]</span></p>
+<ul>
+<li>So the chance goes to 0 for very weak students and to 1 for very strong ones.</li>
+<li>Violation: with four-option multiple choice, even the weakest student guesses right about 25% of the time (a floor), and a careless slip can keep even the strongest below 100% (a ceiling).</li>
+</ul></li>
+</ul>
+</section>
+<section id="independence" class="level3">
+<h3 class="anchored" data-anchor-id="independence">Independence</h3>
+<ul>
+<li><p>Idiosyncratic term unrelated to ability: <span class="math inline">\(\varepsilon_{ij}\)</span> does not depend on how able the student is.</p>
+<p><span class="math display">\[
+\varepsilon_{ij} \perp \theta_i
+\]</span></p>
+<ul>
+<li>What decides an answer beyond the gap behaves the same way for strong and weak students.</li>
+<li>Violation: weak students guess more, so their answers carry more luck than strong students’ answers.</li>
+</ul></li>
+<li><p>Local independence: once ability is known, a student’s answers to different items are independent.</p>
+<p><span class="math display">\[
+P(X_{i1} = x_1, \dots, X_{iJ} = x_J \mid \theta_i) = \prod_{j=1}^{J} P(X_{ij} = x_j \mid \theta_i), \qquad \text{equivalently } \varepsilon_{ij} \perp \varepsilon_{ik} \ (j \ne k)
+\]</span></p>
+<ul>
+<li><span class="math inline">\(\theta_i\)</span> explains everything the items share; what is left is specific to each item.</li>
+<li>Violations:
+<ul>
+<li>Subquestions: items built on one passage have related <span class="math inline">\(\varepsilon_{ij}\)</span>, since misreading the passage hurts all of them.</li>
+<li>Fatigue: a tired student’s <span class="math inline">\(\varepsilon_{ij}\)</span> drops on all the late items together.</li>
+<li>A shared unobserved ability: if some items also need reading, a strong reader’s <span class="math inline">\(\varepsilon_{ij}\)</span> is higher on all of them together.</li>
+</ul></li>
+</ul></li>
+<li><p>Independence across students: one student’s <span class="math inline">\(\varepsilon_{ij}\)</span> is unrelated to another’s.</p>
+<p><span class="math display">\[
+\varepsilon_{ij} \perp \varepsilon_{kl} \quad (i \ne k)
+\]</span></p>
+<ul>
+<li>Violation: copying or group work, so two students’ answers move together.</li>
+</ul></li>
+</ul>
+</section>
+<section id="invariance" class="level3">
+<h3 class="anchored" data-anchor-id="invariance">Invariance</h3>
+<ul>
+<li><p>If the model holds, an item’s difficulty does not depend on which students answered it, and a student’s ability does not depend on which items she answered.</p>
+<ul>
+<li>With raw scores, the same item looks easy in a strong class and hard in a weak one. Under the 1PL, both classes give the same <span class="math inline">\(b_j\)</span>, up to the choice of zero and unit.</li>
+<li>This is what lets students who took different test sets be placed on one scale.</li>
+</ul></li>
+<li><p>In the 1PL, comparing two students does not involve any item, and comparing two items does not involve any student:</p>
+<p><span class="math display">\[
+\text{logit}\,P_{ij} - \text{logit}\,P_{kj} = a(\theta_i - \theta_k), \qquad \text{logit}\,P_{ij} - \text{logit}\,P_{il} = a(b_l - b_j)
+\]</span></p>
+<ul>
+<li><span class="math inline">\(b_j\)</span> cancels in the first and <span class="math inline">\(\theta_i\)</span> in the second. The Rasch tradition calls this specific objectivity.</li>
+<li>It needs the same <span class="math inline">\(a\)</span> everywhere. With item-specific <span class="math inline">\(a_j\)</span> (the 2PL), the student comparison becomes <span class="math inline">\(a_j(\theta_i - \theta_k)\)</span>, so its size depends on which item is used.</li>
+</ul></li>
+<li><p>The property holds only if the parameters really stay fixed across items, students and groups, which the assumptions below state:</p></li>
+<li><p>Equal discrimination: every item weighs the gap against <span class="math inline">\(\varepsilon_{ij}\)</span> the same way.</p>
+<p><span class="math display">\[
+a_j = a \quad \text{for every item } j
+\]</span></p>
+<ul>
+<li>Every ICC has the same steepness, so the curves never cross.</li>
+<li>Violation: a clearly worded item separates students sharply, while an ambiguous one is close to a coin toss for everyone.</li>
+</ul></li>
+<li><p>Same <span class="math inline">\(a\)</span> across students and groups.</p>
+<p><span class="math display">\[
+a_{ij} = a \ \text{for every student } i, \qquad a_g = a \ \text{for every group } g
+\]</span></p>
+<ul>
+<li>Violation: a careless student, or a group taking a low-stakes test, answers with more luck.</li>
+</ul></li>
+<li><p>No differential item functioning (DIF): an item is equally hard for every group at the same ability.</p>
+<p><span class="math display">\[
+P(X_{ij} = 1 \mid \theta_i, G_i = g) = P(X_{ij} = 1 \mid \theta_i), \qquad \text{i.e. } b_{jg} = b_j
+\]</span></p>
+<ul>
+<li>Violation: a word problem about hockey is easier for Canadian students than for others of the same ability.</li>
+</ul></li>
+</ul>
+</section>
+</section>
+<section id="identification" class="level2">
+<h2 class="anchored" data-anchor-id="identification">Identification</h2>
+<ul>
+<li>The answers depend on the parameters only through <span class="math inline">\(a(\theta_i - b_j)\)</span>. So different parameter values can give exactly the same probabilities, and the data cannot tell them apart.</li>
+</ul>
+<section id="location-and-scale" class="level3">
+<h3 class="anchored" data-anchor-id="location-and-scale">Location and scale</h3>
+<ul>
+<li><p>Location: shifting every student and every item by the same amount <span class="math inline">\(c\)</span> changes nothing.</p>
+<p><span class="math display">\[
+\theta_i \to \theta_i + c, \quad b_j \to b_j + c \quad \Rightarrow \quad a(\theta_i - b_j) \text{ unchanged}
+\]</span></p>
+<ul>
+<li>So the zero of the scale is arbitrary.</li>
+</ul></li>
+<li><p>Scale: stretching <span class="math inline">\(\theta\)</span> and <span class="math inline">\(b\)</span> by <span class="math inline">\(k\)</span> and shrinking <span class="math inline">\(a\)</span> by the same <span class="math inline">\(k\)</span> changes nothing.</p>
+<p><span class="math display">\[
+\theta_i \to k\theta_i, \quad b_j \to k b_j, \quad a \to a/k \quad \Rightarrow \quad a(\theta_i - b_j) \text{ unchanged}
+\]</span></p>
+<ul>
+<li>So the unit of the scale is arbitrary too.</li>
+</ul></li>
+<li><p>So we fix one zero and one unit by convention:</p>
+<ul>
+<li>Zero: mean <span class="math inline">\(\theta = 0\)</span> (MML), or <span class="math inline">\(\sum_j b_j = 0\)</span> (JML, as in our code).</li>
+<li>Unit: fix <span class="math inline">\(a = 1\)</span> and measure in units of <span class="math inline">\(\varepsilon_{ij}\)</span>’s spread (Rasch, as in our code), or fix <span class="math inline">\(\text{SD}(\theta) = 1\)</span> and estimate <span class="math inline">\(a\)</span>.</li>
+<li>The basic 1PL fixes <span class="math inline">\(a = 1\)</span>, which is why <span class="math inline">\(a\)</span> does not appear in the earlier formulas.</li>
+</ul></li>
+<li><p>The two unit conventions convert into each other:</p>
+<p><span class="math display">\[
+\theta_i^{\text{SD}} = \theta_i / \sigma, \quad b_j^{\text{SD}} = b_j / \sigma, \quad a^{\text{SD}} = \sigma
+\]</span></p>
+<ul>
+<li><span class="math inline">\(\sigma\)</span> is the SD of <span class="math inline">\(\theta\)</span> under <span class="math inline">\(a = 1\)</span>. In our simulation, <span class="math inline">\(\hat\sigma \approx 1.9\)</span>.</li>
+<li>The fit is the same either way; only the numbers on the scale change.</li>
+</ul></li>
+</ul>
+</section>
+</section>
+<section id="estimation" class="level2">
+<h2 class="anchored" data-anchor-id="estimation">Estimation</h2>
+<ul>
+<li><p>Local independence and independence across students make the probability of the whole gradebook a product:</p>
+<p><span class="math display">\[
+L(\theta, b) = \prod_{i=1}^{N} \prod_{j=1}^{J} P_{ij}^{\,x_{ij}} (1 - P_{ij})^{1 - x_{ij}}, \qquad P_{ij} = \Lambda(\theta_i - b_j)
+\]</span></p></li>
+<li><p>We estimate the parameters by choosing the values that make the observed gradebook most likely. JML and MML differ in how they treat <span class="math inline">\(\theta_i\)</span>.</p></li>
+</ul>
+<section id="joint-maximum-likelihood-jml" class="level3">
+<h3 class="anchored" data-anchor-id="joint-maximum-likelihood-jml">Joint Maximum Likelihood (JML)</h3>
+<ul>
+<li><p>Each <span class="math inline">\(\theta_i\)</span> is treated as an unknown number and estimated together with the <span class="math inline">\(b_j\)</span>, by maximizing the log-likelihood over all of them at once:</p>
+<p><span class="math display">\[
+(\hat\theta, \hat b) = \arg\max_{\theta,\, b} \log L(\theta, b) \quad \text{subject to} \quad \sum_j b_j = 0
+\]</span></p>
+<ul>
+<li>The zero is fixed by <span class="math inline">\(\sum_j b_j = 0\)</span> and the unit by <span class="math inline">\(a = 1\)</span> (see Identification).</li>
+<li>Students with perfect or zero scores have no finite <span class="math inline">\(\hat\theta_i\)</span> and are dropped: a higher <span class="math inline">\(\theta_i\)</span> always makes “all correct” more likely, so <span class="math inline">\(\hat\theta_i \to \infty\)</span> (and <span class="math inline">\(\to -\infty\)</span> for all wrong).</li>
+</ul></li>
+<li><p>Weakness: the <span class="math inline">\(\hat b_j\)</span> are stretched outward, even with many students.</p>
+<ul>
+<li>Each <span class="math inline">\(\theta_i\)</span> rests on only <span class="math inline">\(J\)</span> answers, so <span class="math inline">\(\hat\theta_i\)</span> is noisy, and since the number of <span class="math inline">\(\theta\)</span>’s grows with <span class="math inline">\(N\)</span>, this noise never averages away.</li>
+<li>The noise spreads the estimated abilities apart, and the <span class="math inline">\(\hat b_j\)</span> stretch with them, by roughly <span class="math inline">\(J/(J - 1)\)</span>. This is the incidental parameter (Neyman–Scott) problem.</li>
+<li>A common fix multiplies the <span class="math inline">\(\hat b_j\)</span> by <span class="math inline">\((J - 1)/J\)</span>.</li>
+</ul></li>
+</ul>
+</section>
+<section id="marginal-maximum-likelihood-mml" class="level3">
+<h3 class="anchored" data-anchor-id="marginal-maximum-likelihood-mml">Marginal Maximum Likelihood (MML)</h3>
+<ul>
+<li><p>Each <span class="math inline">\(\theta_i\)</span> is treated as a draw from a distribution, and the <span class="math inline">\(\theta\)</span>’s are integrated out:</p>
+<p><span class="math display">\[
+L(b, \sigma) = \prod_{i=1}^{N} \int \prod_{j=1}^{J} P(X_{ij} = x_{ij} \mid \theta)\, \phi(\theta;\, 0, \sigma^2)\, d\theta
+\]</span></p>
+<ul>
+<li>The unknowns are only the <span class="math inline">\(b_j\)</span> and <span class="math inline">\(\sigma\)</span>, so their number does not grow with <span class="math inline">\(N\)</span>.</li>
+<li>So the stretching that affects JML goes away.</li>
+</ul></li>
+<li><p>Distribution of ability: abilities are drawn independently from a normal distribution.</p>
+<p><span class="math display">\[
+\theta_i \overset{iid}{\sim} N(0, \sigma^2)
+\]</span></p>
+<ul>
+<li>Under the <span class="math inline">\(a = 1\)</span> convention, <span class="math inline">\(\sigma\)</span> is estimated.</li>
+<li>JML does not need this, since it treats each <span class="math inline">\(\theta_i\)</span> as a fixed unknown.</li>
+<li>Violation: a class that mixes two very different groups, such as first-timers and repeat test-takers, has a two-peaked distribution.</li>
+</ul></li>
+<li><p>Perfect and zero scores stay in: MML averages over the ability distribution instead of estimating each <span class="math inline">\(\theta_i\)</span>, so “all correct” has the probability that a random student gets everything right, which is finite.</p></li>
+<li><p>The integral has no closed form, so it is approximated numerically, by quadrature or by averaging over random draws of <span class="math inline">\(\theta\)</span>.</p></li>
+</ul>
+</section>
+</section>
+<section id="simulation-setup" class="level2">
+<h2 class="anchored" data-anchor-id="simulation-setup">Simulation setup</h2>
+<ul>
+<li>We simulate a gradebook from a known 1PL model, estimate it with JML and MML, and compare the estimates with the true values.</li>
+</ul>
+<section id="data" class="level3">
+<h3 class="anchored" data-anchor-id="data">Data</h3>
+<ul>
+<li><p><span class="math inline">\(N = 500\)</span> students answer <span class="math inline">\(J = 10\)</span> items.</p></li>
+<li><p>True parameters:</p>
+<p><span class="math display">\[
+\theta_i \overset{iid}{\sim} N(0, 2^2), \qquad b_j \in \{-2, \dots, 2\} \text{ (10 evenly spaced values)}, \qquad a = 1
+\]</span></p></li>
+<li><p>Answers are drawn from the model:</p>
+<p><span class="math display">\[
+X_{ij} \sim \text{Bernoulli}\big(\Lambda(\theta_i - b_j)\big)
+\]</span></p>
+<ul>
+<li>With <span class="math inline">\(\sigma = 2\)</span>, abilities are spread wide, so some students get every item right or wrong.</li>
+</ul></li>
+</ul>
+</section>
+<section id="jml" class="level3">
+<h3 class="anchored" data-anchor-id="jml">JML</h3>
+<ul>
+<li>Students with perfect or zero scores are dropped.</li>
+<li>The last difficulty is set to minus the sum of the others, so <span class="math inline">\(\sum_j b_j = 0\)</span>.</li>
+<li>The log-likelihood is maximized over all remaining <span class="math inline">\(\theta_i\)</span> and <span class="math inline">\(b_j\)</span> at once with BFGS, starting from 0.</li>
+<li>The <span class="math inline">\(\hat b_j\)</span> are multiplied by <span class="math inline">\((J - 1)/J\)</span> to correct the stretching. Standard errors come from the Hessian.</li>
+</ul>
+</section>
+<section id="mml" class="level3">
+<h3 class="anchored" data-anchor-id="mml">MML</h3>
+<ul>
+<li><p>The integral over ability is approximated by simulation: each student gets <span class="math inline">\(R = 100\)</span> fixed standard normal draws <span class="math inline">\(z_{ir}\)</span>, and <span class="math inline">\(\theta_{ir} = \sigma z_{ir}\)</span>.</p>
+<p><span class="math display">\[
+L(b, \sigma) \approx \prod_{i=1}^{N} \frac{1}{R} \sum_{r=1}^{R} \prod_{j=1}^{J} P(X_{ij} = x_{ij} \mid \theta_{ir})
+\]</span></p>
+<ul>
+<li>The draws are fixed once, so the likelihood stays smooth while the optimizer searches.</li>
+</ul></li>
+<li><p>The parameters are the 10 <span class="math inline">\(b_j\)</span> and <span class="math inline">\(\log\sigma\)</span> (so <span class="math inline">\(\sigma\)</span> stays positive), maximized with BFGS starting from <span class="math inline">\(b_j = 0\)</span> and <span class="math inline">\(\sigma = 1\)</span>.</p></li>
+<li><p>The zero is set by mean <span class="math inline">\(\theta = 0\)</span>, so the <span class="math inline">\(\hat b_j\)</span> are centered before comparing them with the true values.</p></li>
+<li><p>As a check, the same data are fitted with the mirt package (<code>itemtype = "Rasch"</code>), which integrates by quadrature.</p></li>
+</ul>
+</section>
+</section>
+<section id="results" class="level2">
+<h2 class="anchored" data-anchor-id="results">Results</h2>
+<section id="data-check" class="level3">
+<h3 class="anchored" data-anchor-id="data-check">Data check</h3>
+<ul>
+<li>JML dropped 63 of the 500 students for perfect or zero scores. MML keeps all 500.</li>
+<li>The share of correct answers falls from 0.81 on the easiest item to 0.22 on the hardest, as the difficulties rise.</li>
+</ul>
+</section>
+<section id="item-difficulties" class="level3">
+<h3 class="anchored" data-anchor-id="item-difficulties">Item difficulties</h3>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span> <span class="sc">+</span> <span class="dv">1</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 2</code></pre>
+<div id="tbl-b" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-b-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: True and estimated item difficulties (MML centered)
+</figcaption>
+<div aria-describedby="tbl-b-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="cell caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: right;">Item</th>
+<th style="text-align: right;">True</th>
+<th style="text-align: right;">JML raw</th>
+<th style="text-align: right;">JML corrected</th>
+<th style="text-align: right;">MML</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">-2.00</td>
+<td style="text-align: right;">-2.57</td>
+<td style="text-align: right;">-2.31</td>
+<td style="text-align: right;">-2.22</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">-1.56</td>
+<td style="text-align: right;">-1.55</td>
+<td style="text-align: right;">-1.40</td>
+<td style="text-align: right;">-1.38</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">-1.11</td>
+<td style="text-align: right;">-1.45</td>
+<td style="text-align: right;">-1.31</td>
+<td style="text-align: right;">-1.29</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">-0.67</td>
+<td style="text-align: right;">-0.65</td>
+<td style="text-align: right;">-0.58</td>
+<td style="text-align: right;">-0.58</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">-0.22</td>
+<td style="text-align: right;">-0.28</td>
+<td style="text-align: right;">-0.25</td>
+<td style="text-align: right;">-0.25</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">0.22</td>
+<td style="text-align: right;">0.39</td>
+<td style="text-align: right;">0.35</td>
+<td style="text-align: right;">0.35</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">0.67</td>
+<td style="text-align: right;">0.81</td>
+<td style="text-align: right;">0.73</td>
+<td style="text-align: right;">0.72</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">1.11</td>
+<td style="text-align: right;">1.16</td>
+<td style="text-align: right;">1.05</td>
+<td style="text-align: right;">1.03</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">1.56</td>
+<td style="text-align: right;">1.79</td>
+<td style="text-align: right;">1.61</td>
+<td style="text-align: right;">1.57</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">2.00</td>
+<td style="text-align: right;">2.36</td>
+<td style="text-align: right;">2.12</td>
+<td style="text-align: right;">2.04</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
-<p>You can add options to executable code like this</p>
+</figure>
+</div>
+</div>
 <div class="cell">
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 4</code></pre>
+<div class="cell-output-display">
+<div id="fig-b" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-b-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="1pl-report_files/figure-html/fig-b-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-b-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Estimated against true difficulties. Points on the dashed line match the truth.
+</figcaption>
+</figure>
 </div>
 </div>
-<p>The <code>echo: false</code> option disables the printing of code (only output is displayed).</p>
+</div>
+<ul>
+<li>JML without correction is stretched outward: regressing its estimates on the true values gives a slope of 1.17, against the <span class="math inline">\(J/(J-1) =\)</span> 1.11 that Estimation predicts.</li>
+<li>The <span class="math inline">\((J-1)/J\)</span> correction brings the slope to 1.05.</li>
+<li>MML, with no correction, gives a slope of 1.02.</li>
+</ul>
+</section>
+<section id="checking-mml-against-mirt" class="level3">
+<h3 class="anchored" data-anchor-id="checking-mml-against-mirt">Checking MML against mirt</h3>
+<ul>
+<li>Both use the same zero (mean <span class="math inline">\(\theta = 0\)</span>), so the estimates and standard errors are compared as they are.</li>
+</ul>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ==============================================================================</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># MML Estimation</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Conventions</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co">#   i = 1, ..., N : students (rows)</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co">#   j = 1, ..., J : questions (columns)</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co">#   r = 1, ..., R : simulation draws</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co">#   X             : N x J matrix of simulated responses (the gradebook)</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co"># True values (from the simulation, used only for comparison)</span></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co">#   b_true        : difficulties</span></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="co">#   sigma_true    : SD of abilities, theta ~ N(0, sigma_true^2)</span></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Estimated parameters</span></span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="co">#   b[j]          : difficulty of question j</span></span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="co">#   sigma         : SD of abilities in the population</span></span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulation of the integral over ability</span></span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="co">#   draws[i, r]   : fixed standard normal draw r for student i</span></span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="co">#   theta[i, r]   : simulated ability = sigma * draws[i, r]</span></span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="co">#   P[i, r, j]    : probability of a correct answer at that ability</span></span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="co">#                   = logistic(theta[i, r] - b[j])</span></span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a><span class="co"># ==============================================================================</span></span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">"01_simulate_data.R"</span>) <span class="co"># creates N, J, theta, b, X</span></span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- Simulation draws --------------------------------------------------------</span></span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a><span class="co"># Fixed standard normal draws, R per student, created once outside the</span></span>
-<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a><span class="co"># likelihood so it stays smooth across optimizer iterations.</span></span>
-<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">2</span>)</span>
-<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>R <span class="ot">&lt;-</span> <span class="dv">100</span></span>
-<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>draws <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(N <span class="sc">*</span> R, <span class="dv">0</span>, <span class="dv">1</span>), <span class="at">nrow =</span> N, <span class="at">ncol =</span> R) <span class="co"># N * R</span></span>
-<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- Marginal log-likelihood -------------------------------------------------</span></span>
-<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a><span class="co"># logsumexp helper</span></span>
-<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>marginal_log_likelihood <span class="ot">&lt;-</span> <span class="cf">function</span>(params, X, draws) {</span>
-<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>  N <span class="ot">&lt;-</span> <span class="fu">nrow</span>(X)</span>
-<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>  J <span class="ot">&lt;-</span> <span class="fu">ncol</span>(X)</span>
-<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>  R <span class="ot">&lt;-</span> <span class="fu">ncol</span>(draws)</span>
-<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>  b <span class="ot">&lt;-</span> params[<span class="dv">1</span><span class="sc">:</span>J]</span>
-<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a>  log_sigma <span class="ot">&lt;-</span> params[J <span class="sc">+</span> <span class="dv">1</span>] <span class="co"># optimizer searches over any real number</span></span>
-<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>  sigma <span class="ot">&lt;-</span> <span class="fu">exp</span>(log_sigma) <span class="co"># so sigma stays positive</span></span>
-<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>  theta <span class="ot">&lt;-</span> sigma <span class="sc">*</span> draws <span class="co"># N x R, simulated abilities</span></span>
-<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a>  gap <span class="ot">&lt;-</span> <span class="fu">outer</span>(theta, b, <span class="st">"-"</span>) <span class="co"># N x R x J</span></span>
-<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a>  log_p <span class="ot">&lt;-</span> <span class="fu">plogis</span>(gap, <span class="at">log.p =</span> <span class="cn">TRUE</span>) <span class="co"># log(P)</span></span>
-<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a>  log_1mp <span class="ot">&lt;-</span> <span class="fu">plogis</span>(gap, <span class="at">log.p =</span> <span class="cn">TRUE</span>, <span class="at">lower.tail =</span> <span class="cn">FALSE</span>) <span class="co"># log(1 - P)</span></span>
-<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Log-probability of each student's answer pattern at each draw</span></span>
-<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a>  ll_ir <span class="ot">&lt;-</span> <span class="fu">sapply</span>(<span class="dv">1</span><span class="sc">:</span>R, <span class="cf">function</span>(r) {</span>
-<span id="cb4-58"><a href="#cb4-58" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rowSums</span>(X <span class="sc">*</span> log_p[, r, ] <span class="sc">+</span> (<span class="dv">1</span> <span class="sc">-</span> X) <span class="sc">*</span> log_1mp[, r, ])</span>
-<span id="cb4-59"><a href="#cb4-59" aria-hidden="true" tabindex="-1"></a>  }) <span class="co"># N * R</span></span>
-<span id="cb4-60"><a href="#cb4-60" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb4-61"><a href="#cb4-61" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Average over draws for each student (log-sum-exp needed for long tests)</span></span>
-<span id="cb4-62"><a href="#cb4-62" aria-hidden="true" tabindex="-1"></a>  ll_i <span class="ot">&lt;-</span> <span class="fu">log</span>(<span class="fu">rowMeans</span>(<span class="fu">exp</span>(ll_ir))) <span class="co"># length N</span></span>
-<span id="cb4-63"><a href="#cb4-63" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb4-64"><a href="#cb4-64" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sum</span>(ll_i)</span>
-<span id="cb4-65"><a href="#cb4-65" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb4-66"><a href="#cb4-66" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-67"><a href="#cb4-67" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- Optimization ------------------------------------------------------------</span></span>
-<span id="cb4-68"><a href="#cb4-68" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-69"><a href="#cb4-69" aria-hidden="true" tabindex="-1"></a>start <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="dv">0</span>, J <span class="sc">+</span> <span class="dv">1</span>) <span class="co"># all b = 0; log_sigma = 0, i.e. sigma = 1</span></span>
-<span id="cb4-70"><a href="#cb4-70" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(start) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">paste0</span>(<span class="st">"b_"</span>, <span class="dv">1</span><span class="sc">:</span>J), <span class="st">"log_sigma"</span>)</span>
-<span id="cb4-71"><a href="#cb4-71" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-72"><a href="#cb4-72" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">optim</span>(</span>
-<span id="cb4-73"><a href="#cb4-73" aria-hidden="true" tabindex="-1"></a>  <span class="at">par     =</span> start,</span>
-<span id="cb4-74"><a href="#cb4-74" aria-hidden="true" tabindex="-1"></a>  <span class="at">fn      =</span> marginal_log_likelihood,</span>
-<span id="cb4-75"><a href="#cb4-75" aria-hidden="true" tabindex="-1"></a>  <span class="at">X       =</span> X,</span>
-<span id="cb4-76"><a href="#cb4-76" aria-hidden="true" tabindex="-1"></a>  <span class="at">draws   =</span> draws,</span>
-<span id="cb4-77"><a href="#cb4-77" aria-hidden="true" tabindex="-1"></a>  <span class="at">method  =</span> <span class="st">"BFGS"</span>,</span>
-<span id="cb4-78"><a href="#cb4-78" aria-hidden="true" tabindex="-1"></a>  <span class="at">hessian =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb4-79"><a href="#cb4-79" aria-hidden="true" tabindex="-1"></a>  <span class="at">control =</span> <span class="fu">list</span>(<span class="at">fnscale =</span> <span class="sc">-</span><span class="dv">1</span>, <span class="at">maxit =</span> <span class="dv">1000</span>)</span>
-<span id="cb4-80"><a href="#cb4-80" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb4-81"><a href="#cb4-81" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-82"><a href="#cb4-82" aria-hidden="true" tabindex="-1"></a>fit<span class="sc">$</span>convergence <span class="co"># 0 = converged</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 0</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- Results -----------------------------------------------------------------</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>b_mml <span class="ot">&lt;-</span> fit<span class="sc">$</span>par[<span class="dv">1</span><span class="sc">:</span>J]</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">cbind</span>(<span class="at">true =</span> b_true, <span class="at">mml =</span> b_mml <span class="sc">-</span> <span class="fu">mean</span>(b_mml)), <span class="dv">2</span>) <span class="co"># centered difficulties</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>      true   mml
-b_1  -2.00 -2.22
-b_2  -1.56 -1.38
-b_3  -1.11 -1.29
-b_4  -0.67 -0.58
-b_5  -0.22 -0.25
-b_6   0.22  0.35
-b_7   0.67  0.72
-b_8   1.11  1.03
-b_9   1.56  1.57
-b_10  2.00  2.04</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">exp</span>(fit<span class="sc">$</span>par[<span class="st">"log_sigma"</span>]) <span class="co"># estimated sigma</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>log_sigma 
- 1.913696 </code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- Check against mirt ------------------------------------------------------</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(mirt)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Loading required package: stats4</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Loading required package: lattice</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>fit_mirt <span class="ot">&lt;-</span> <span class="fu">mirt</span>(<span class="fu">as.data.frame</span>(X), <span class="at">model =</span> <span class="dv">1</span>, <span class="at">itemtype =</span> <span class="st">"Rasch"</span>, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>pars     <span class="ot">&lt;-</span> <span class="fu">coef</span>(fit_mirt, <span class="at">IRTpars =</span> <span class="cn">TRUE</span>, <span class="at">simplify =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>b_mirt     <span class="ot">&lt;-</span> pars<span class="sc">$</span>items[, <span class="st">"b"</span>]</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>sigma_mirt <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(pars<span class="sc">$</span>cov[<span class="dv">1</span>, <span class="dv">1</span>])   <span class="co"># mirt reports the variance of theta</span></span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">cbind</span>(<span class="at">true =</span> b_true,</span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">mml  =</span> b_mml,</span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">mirt =</span> b_mirt), <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>      true   mml  mirt
-b_1  -2.00 -2.28 -2.29
-b_2  -1.56 -1.44 -1.45
-b_3  -1.11 -1.35 -1.36
-b_4  -0.67 -0.64 -0.65
-b_5  -0.22 -0.31 -0.32
-b_6   0.22  0.29  0.28
-b_7   0.67  0.66  0.64
-b_8   1.11  0.97  0.96
-b_9   1.56  1.51  1.49
-b_10  2.00  1.98  1.96</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">c</span>(<span class="at">sigma_true =</span> sigma_true,</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">sigma_mml  =</span> <span class="fu">unname</span>(<span class="fu">exp</span>(fit<span class="sc">$</span>par[<span class="st">"log_sigma"</span>])),</span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">sigma_mirt =</span> sigma_mirt)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>sigma_true  sigma_mml sigma_mirt 
-  2.000000   1.913696   1.889978 </code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(</span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="at">sigma_true =</span> sigma_true,</span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">sigma_mml  =</span> <span class="fu">unname</span>(<span class="fu">exp</span>(fit<span class="sc">$</span>par[<span class="st">"log_sigma"</span>])),</span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">sigma_mirt =</span> sigma_mirt)</span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>sigma_true  sigma_mml sigma_mirt 
-  2.000000   1.913696   1.889978 </code></pre>
+<div id="tbl-mirt" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-mirt-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;2: Our MML and mirt: difficulties and standard errors
+</figcaption>
+<div aria-describedby="tbl-mirt-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="cell caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: right;">Item</th>
+<th style="text-align: right;">MML</th>
+<th style="text-align: right;">SE (MML)</th>
+<th style="text-align: right;">mirt</th>
+<th style="text-align: right;">SE (mirt)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">-2.280</td>
+<td style="text-align: right;">0.169</td>
+<td style="text-align: right;">-2.293</td>
+<td style="text-align: right;">0.169</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">-1.435</td>
+<td style="text-align: right;">0.153</td>
+<td style="text-align: right;">-1.447</td>
+<td style="text-align: right;">0.152</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">-1.345</td>
+<td style="text-align: right;">0.152</td>
+<td style="text-align: right;">-1.357</td>
+<td style="text-align: right;">0.151</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">-0.637</td>
+<td style="text-align: right;">0.145</td>
+<td style="text-align: right;">-0.650</td>
+<td style="text-align: right;">0.144</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">-0.311</td>
+<td style="text-align: right;">0.143</td>
+<td style="text-align: right;">-0.324</td>
+<td style="text-align: right;">0.143</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">0.293</td>
+<td style="text-align: right;">0.143</td>
+<td style="text-align: right;">0.279</td>
+<td style="text-align: right;">0.143</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">0.659</td>
+<td style="text-align: right;">0.145</td>
+<td style="text-align: right;">0.644</td>
+<td style="text-align: right;">0.144</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">0.970</td>
+<td style="text-align: right;">0.147</td>
+<td style="text-align: right;">0.955</td>
+<td style="text-align: right;">0.147</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">1.507</td>
+<td style="text-align: right;">0.154</td>
+<td style="text-align: right;">1.491</td>
+<td style="text-align: right;">0.153</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">1.981</td>
+<td style="text-align: right;">0.162</td>
+<td style="text-align: right;">1.965</td>
+<td style="text-align: right;">0.161</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
+</figure>
+</div>
+</div>
+<ul>
+<li>The largest difference between the two on any item is 0.017.</li>
+</ul>
+</section>
+<section id="spread-of-ability" class="level3">
+<h3 class="anchored" data-anchor-id="spread-of-ability">Spread of ability</h3>
+<ul>
+<li>The true <span class="math inline">\(\sigma\)</span> is 2. Our MML estimates 1.914 (SE 0.093), and mirt 1.89 (SE 0.092).</li>
+<li>Under the SD convention, the same fit gives <span class="math inline">\(\hat a = \hat\sigma \approx\)</span> 1.91, with every <span class="math inline">\(\hat\theta_i\)</span> and <span class="math inline">\(\hat b_j\)</span> divided by <span class="math inline">\(\hat\sigma\)</span> (see Identification).</li>
+</ul>
+</section>
+<section id="limitation" class="level3">
+<h3 class="anchored" data-anchor-id="limitation">Limitation</h3>
+<ul>
+<li>These numbers come from one simulated dataset. With <span class="math inline">\(N =\)</span> 500, part of each gap between an estimate and the truth is chance, so one run cannot fully separate JML’s bias from noise.</li>
+<li>Repeating the simulation many times and averaging would separate the two.</li>
+</ul>
+</section>
+</section>
+<section id="discussion" class="level2">
+<h2 class="anchored" data-anchor-id="discussion">Discussion</h2>
+<ul>
+<li>This is a working version. Next steps:
+<ul>
+<li>Ability recovery: score each student after MML with the posterior mean of <span class="math inline">\(\theta\)</span> given her answers (EAP), and compare the scores with the true <span class="math inline">\(\theta_i\)</span>.</li>
+<li>Replications: repeat the simulation many times and report the average bias and error of each method, to separate JML’s stretching from single-run noise.</li>
+<li><span class="math inline">\(\hat\sigma\)</span> vs.&nbsp;mirt: rerun MML with more draws (<span class="math inline">\(R = 1000\)</span>) to check whether the gap between 1.914 and mirt’s 1.89 comes from the 100 draws.</li>
+<li>Conditional maximum likelihood (CML): remove each <span class="math inline">\(\theta_i\)</span> by conditioning on the raw score, which needs no normality assumption. This is the same idea as the conditional logit for panel data.</li>
+<li>Beyond the 1PL: let discrimination differ by item (the 2PL).</li>
+</ul></li>
+<li>Theory still to add:
+<ul>
+<li>Students who took different test sets: the likelihood over the answers each student gave, and the overlap between test sets that connects their scales.</li>
+<li>Checking the model: item fit statistics, residual correlations for local independence, and DIF tests.</li>
+<li>Score function, Hessian and information: where the estimates and standard errors come from, why the raw score is sufficient in the 1PL, and the updates that move each estimate by (observed <span class="math inline">\(-\)</span> expected score) / information: Newton–Raphson for JML, and EM for MML, where the expected score is averaged over each student’s posterior.</li>
+<li>Scoring students and reliability: ML, EAP and MAP scores, their standard errors, and separation reliability.</li>
+</ul></li>
+</ul>
+</section>
+<section id="side-note-irt-vs.-discrete-choice" class="level2">
+<h2 class="anchored" data-anchor-id="side-note-irt-vs.-discrete-choice">Side note: IRT vs.&nbsp;discrete choice</h2>
+<ul>
+<li>Same core: the 1PL is a binary logit. Student <span class="math inline">\(i\)</span> answers question <span class="math inline">\(j\)</span> correctly when <span class="math inline">\(U_{ij} = \theta_i - b_j + \xi_{ij} &gt; 0\)</span>, with <span class="math inline">\(\xi\)</span> standard logistic.</li>
+<li>Different purpose:
+<ul>
+<li>Discrete choice estimates preferences to predict choices in new situations (new prices, new products).</li>
+<li>IRT estimates abilities and difficulties to measure students and questions on one scale.</li>
+</ul></li>
+<li>So the burden of justification differs:
+<ul>
+<li>Counterfactuals go beyond the data, so a utility function needs strong theoretical justification.</li>
+<li>Measurement stays close to the data, so an IRT model is judged mainly by fit, which the answers can check.</li>
+</ul></li>
+<li>Panel structure: each student answers many questions, so <span class="math inline">\(\theta_i\)</span> works like an individual effect in a panel logit.
+<ul>
+<li>JML treats <span class="math inline">\(\theta_i\)</span> as fixed effects, MML as random effects.</li>
+</ul></li>
+<li>Scale of the idiosyncratic term: in both, only gaps relative to it are identified, so its scale is fixed by convention.
+<ul>
+<li>In discrete choice (e.g.&nbsp;BLP), the parameters are a means to scale-free quantities: elasticities, markups, and willingness to pay are ratios or functions of choice probabilities, and price converts utility into dollars. So the scale rarely matters.</li>
+<li>In IRT, the parameters are the measurement itself: <span class="math inline">\(\theta_i\)</span> and <span class="math inline">\(b_j\)</span> are reported as scores and difficulties, with no price to supply a natural unit. So the unit set by the idiosyncratic term is the unit of the reported numbers.</li>
+</ul></li>
+</ul>
 </section>
 
 </main>

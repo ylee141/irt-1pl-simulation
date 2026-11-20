@@ -8,7 +8,9 @@ format:
     toc-depth: 3
 ---
 
-## Background
+## Introduction
+
+### Motivation
 
 - Schools and testing programs need to know where students stand, to:
   - admit them,
@@ -21,13 +23,13 @@ format:
   - answers can be scored easily,
   - scores can be compared across students.
 
-## Goal
+### Goal
 
 - Estimate a student's "ability" from their answers to test questions,
   - **reliably:** consistently, with small measurement error,
   - **practically:** still working when tests change over time, so an estimate means the same thing whichever questions were answered.
 
-## Problem
+### Problem
 
 - Answers mix two things we normally can't observe: the student's ability and the questions' difficulty.
   - Students often take different test sets (to prevent copying, to fit each student's level, to update content).
@@ -45,9 +47,9 @@ format:
 - What the table shows:
   - In all three, we see whether the attempt succeeded.
   - In some settings, we can directly observe the difficulty or the ability. These can help build a concrete picture of what difficulty and ability could mean in a test.
-  - In a test, both difficulty and ability is unobserved : needs to be estimated from the observed answers.
+  - In a test, both difficulty and ability are unobserved and need to be estimated from the observed answers.
 
-## Solution
+### Solution
 
 - Since ability and difficulty can't be observed directly, we estimate them from the answers through a model, in three steps:
   - We give each student an ability $\theta_i$ and each question a difficulty $b_j$.
@@ -134,8 +136,9 @@ $$
 
 - $\varepsilon_{ij}$ is the idiosyncratic term, and the student answers correctly when $Z_{ij} \ge 0$.
 - We observe only $X_{ij}$, so the data show the gap only relative to $\varepsilon_{ij}$.
-  - $a$ sets the balance: with a large $a$, the gap decides almost every answer; as $a \to 0$, every answer becomes a coin toss.
-  - The 1PL uses the same $a$ for every item, so it is implicitly assumed that every item is equally informative.
+  - $a$ sets the balance: with a large $a$, the gap decides almost every answer and luck matters little; as $a \to 0$, every answer becomes a coin toss.
+  - So $a$ measures how sharply an item separates stronger students from weaker ones. This is why $a$ is called the discrimination.
+  - The 1PL uses the same $a$ for every item, so it is implicitly assumed that every item is equally informative. Letting $a$ differ by item, as $a_j$, gives the two-parameter logistic (2PL) model.
   - So the answers pin down only $a(\theta_i - b_j)$ compared with $\varepsilon_{ij}$, and a unit has to be fixed before anything can be estimated.
 - For 1PL, we take $\varepsilon_{ij}$ to be standard logistic.
   - This gives back the 1PL formula: $P(X_{ij} = 1) = P(Z_{ij} \ge 0) = \Lambda\big(a(\theta_i - b_j)\big)$.
@@ -379,11 +382,122 @@ $$
 
 ## Results
 
-<!-- TODO: run the scripts in code chunks, then the table (true vs. JML raw vs. corrected vs. MML vs. mirt) and sigma-hat -->
+```{r}
+#| label: run-jml
+#| include: false
+source("02_estimate_jml.R")
+
+# Save the JML results before the MML script overwrites shared names
+jml <- list(
+  b_raw     = b_hat,
+  b_corr    = b_hat_corr,
+  se_corr   = b_se_corr,
+  n_dropped = sum(!keep)
+)
+```
+
+```{r}
+#| label: run-mml
+#| include: false
+source("03_estimate_mml.R")
+
+# Centered MML difficulties share the true values' zero (sum of b = 0)
+mml_c <- b_mml - mean(b_mml)
+
+# Slope of estimates on true values: 1 = no stretching
+slope <- function(est) unname(coef(lm(est ~ b_true))[2])
+```
+
+### Data check
+
+- JML dropped `r jml$n_dropped` of the `r N` students for perfect or zero scores. MML keeps all `r N`.
+- The share of correct answers falls from `r round(max(colMeans(X)), 2)` on the easiest item to `r round(min(colMeans(X)), 2)` on the hardest, as the difficulties rise.
+
+### Item difficulties
+
+```{r}
+#| label: tbl-b
+#| echo: false
+#| tbl-cap: "True and estimated item difficulties (MML centered)"
+knitr::kable(
+  data.frame(
+    Item            = 1:J,
+    True            = b_true,
+    `JML raw`       = jml$b_raw,
+    `JML corrected` = jml$b_corr,
+    MML             = mml_c,
+    check.names = FALSE
+  ),
+  digits = 2,
+  row.names = FALSE
+)
+```
+
+```{r}
+#| label: fig-b
+#| echo: false
+#| fig-cap: "Estimated against true difficulties. Points on the dashed line match the truth."
+lims <- range(b_true, jml$b_raw, jml$b_corr, mml_c)
+plot(b_true, jml$b_raw, pch = 1, col = "grey40", xlim = lims, ylim = lims,
+     xlab = "true b", ylab = "estimated b")
+points(b_true, jml$b_corr, pch = 16, col = "steelblue")
+points(b_true, mml_c, pch = 17, col = "darkorange")
+abline(0, 1, lty = 2)
+legend("topleft", legend = c("JML raw", "JML corrected", "MML"),
+       pch = c(1, 16, 17), col = c("grey40", "steelblue", "darkorange"), bty = "n")
+```
+
+- JML without correction is stretched outward: regressing its estimates on the true values gives a slope of `r round(slope(jml$b_raw), 2)`, against the $J/(J-1) =$ `r round(J / (J - 1), 2)` that Estimation predicts.
+- The $(J-1)/J$ correction brings the slope to `r round(slope(jml$b_corr), 2)`.
+- MML, with no correction, gives a slope of `r round(slope(mml_c), 2)`.
+
+### Checking MML against mirt
+
+- Both use the same zero (mean $\theta = 0$), so the estimates and standard errors are compared as they are.
+
+```{r}
+#| label: tbl-mirt
+#| echo: false
+#| tbl-cap: "Our MML and mirt: difficulties and standard errors"
+knitr::kable(
+  data.frame(
+    Item          = 1:J,
+    MML           = b_mml,
+    `SE (MML)`    = b_se_mml,
+    mirt          = b_mirt,
+    `SE (mirt)`   = b_se_mirt,
+    check.names = FALSE
+  ),
+  digits = 3,
+  row.names = FALSE
+)
+```
+
+- The largest difference between the two on any item is `r round(max(abs(b_mml - b_mirt)), 3)`.
+
+### Spread of ability
+
+- The true $\sigma$ is `r sigma_true`. Our MML estimates `r round(sigma_mml, 3)` (SE `r round(sigma_se_mml, 3)`), and mirt `r round(sigma_mirt, 3)` (SE `r round(sigma_se_mirt, 3)`).
+- Under the SD convention, the same fit gives $\hat a = \hat\sigma \approx$ `r round(sigma_mml, 2)`, with every $\hat\theta_i$ and $\hat b_j$ divided by $\hat\sigma$ (see Identification).
+
+### Limitation
+
+- These numbers come from one simulated dataset. With $N =$ `r N`, part of each gap between an estimate and the truth is chance, so one run cannot fully separate JML's bias from noise.
+- Repeating the simulation many times and averaging would separate the two.
 
 ## Discussion
 
-<!-- TODO -->
+- This is a working version. Next steps:
+  - Ability recovery: score each student after MML with the posterior mean of $\theta$ given her answers (EAP), and compare the scores with the true $\theta_i$.
+  - Replications: repeat the simulation many times and report the average bias and error of each method, to separate JML's stretching from single-run noise.
+  - $\hat\sigma$ vs. mirt: rerun MML with more draws ($R = 1000$) to check whether the gap between `r round(sigma_mml, 3)` and mirt's `r round(sigma_mirt, 3)` comes from the `r R` draws.
+  - Conditional maximum likelihood (CML): remove each $\theta_i$ by conditioning on the raw score, which needs no normality assumption. This is the same idea as the conditional logit for panel data.
+  - Beyond the 1PL: let discrimination differ by item (the 2PL).
+- Theory still to add:
+  - Students who took different test sets: the likelihood over the answers each student gave, and the overlap between test sets that connects their scales.
+  - Checking the model: item fit statistics, residual correlations for local independence, and DIF tests.
+  - Score function, Hessian and information: where the estimates and standard errors come from, why the raw score is sufficient in the 1PL, and the updates that move each estimate by (observed $-$ expected score) / information: Newton–Raphson for JML, and EM for MML, where the expected score is averaged over each student's posterior.
+  - Scoring students and reliability: ML, EAP and MAP scores, their standard errors, and separation reliability.
 
 ## Side note: IRT vs. discrete choice
 
@@ -399,3 +513,4 @@ $$
 - Scale of the idiosyncratic term: in both, only gaps relative to it are identified, so its scale is fixed by convention.
   - In discrete choice (e.g. BLP), the parameters are a means to scale-free quantities: elasticities, markups, and willingness to pay are ratios or functions of choice probabilities, and price converts utility into dollars. So the scale rarely matters.
   - In IRT, the parameters are the measurement itself: $\theta_i$ and $b_j$ are reported as scores and difficulties, with no price to supply a natural unit. So the unit set by the idiosyncratic term is the unit of the reported numbers.
+
